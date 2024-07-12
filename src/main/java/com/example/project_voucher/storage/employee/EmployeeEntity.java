@@ -1,13 +1,11 @@
 package com.example.project_voucher.storage.employee;
 
+import com.example.project_voucher.storage.BaseEntity;
 import jakarta.persistence.*;
 
 @Table(name = "employee")
 @Entity
-public class EmployeeEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class EmployeeEntity extends BaseEntity {
     private String name;
     private String position;
     private String department;
@@ -21,9 +19,6 @@ public class EmployeeEntity {
         this.department = department;
     }
 
-    public Long getId() {
-        return id;
-    }
     public String getName() {
         return name;
     }
