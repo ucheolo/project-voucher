@@ -5,6 +5,7 @@ import com.example.project_voucher.common.type.RequesterType;
 import com.example.project_voucher.common.type.VoucherAmountType;
 import com.example.project_voucher.common.type.VoucherStatusType;
 import com.example.project_voucher.storage.voucher.VoucherEntity;
+import com.example.project_voucher.storage.voucher.VoucherHistoryEntity;
 import com.example.project_voucher.storage.voucher.VoucherRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +25,7 @@ public class VoucherService {
     @Transactional
     public String publish(final LocalDate validFrom, final LocalDate validTo, final VoucherAmountType amount) {
         final String code = UUID.randomUUID().toString().toUpperCase().replaceAll("-", "");
-        final VoucherEntity voucherEntity = new VoucherEntity(code, VoucherStatusType.PUBLISH, validFrom, validTo, amount);
+        final VoucherEntity voucherEntity = new VoucherEntity(code, VoucherStatusType.PUBLISH, validFrom, validTo, amount, null);
 
         return voucherRepository.save(voucherEntity).code();
     }
@@ -36,7 +37,7 @@ public class VoucherService {
         final VoucherEntity voucherEntity = voucherRepository.findByCode(code)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품권입니다."));
 
-        voucherEntity.disable();
+        voucherEntity.disable(null);
 
         // voucherRepository.save(voucherEntity);
     }
@@ -47,38 +48,53 @@ public class VoucherService {
         final VoucherEntity voucherEntity = voucherRepository.findByCode(code)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품권입니다."));
 
-        voucherEntity.use();
+        voucherEntity.use(null);
 
         // voucherRepository.save(voucherEntity);
     }
 
+    // 상품권 발행 v2
     @Transactional
     public String publishV2(final RequestContext requestContext, final LocalDate validFrom, final LocalDate validTo, final VoucherAmountType amount) {
         final String code = UUID.randomUUID().toString().toUpperCase().replaceAll("-", "");
-        final VoucherEntity voucherEntity = new VoucherEntity(code, VoucherStatusType.PUBLISH, validFrom, validTo, amount);
+        final String orderId = UUID.randomUUID().toString().toUpperCase().replaceAll("-", "");
+
+        final VoucherHistoryEntity voucherHistoryEntity = new VoucherHistoryEntity(orderId, requestContext.requesterType(),
+                requestContext.requesterId(), VoucherStatusType.PUBLISH, "테스트 발행");
+        final VoucherEntity voucherEntity = new VoucherEntity(code, VoucherStatusType.PUBLISH, validFrom, validTo, amount, voucherHistoryEntity);
 
         return voucherRepository.save(voucherEntity).code();
     }
 
 
-    // 상품권 사용 불가 처리
+    // 상품권 사용 불가 처리 v2
     @Transactional
     public void disableV2(final RequestContext requestContext, final String code) {
+        final String orderId = UUID.randomUUID().toString().toUpperCase().replaceAll("-", "");
+
         final VoucherEntity voucherEntity = voucherRepository.findByCode(code)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품권입니다."));
 
-        voucherEntity.disable();
+        final VoucherHistoryEntity voucherHistoryEntity = new VoucherHistoryEntity(orderId, requestContext.requesterType(),
+                requestContext.requesterId(), VoucherStatusType.DISABLE, "테스트 사용 불가");
+
+        voucherEntity.disable(voucherHistoryEntity);
 
         // voucherRepository.save(voucherEntity);
     }
 
-    // 상품권 사용
+    // 상품권 사용 v2
     @Transactional
     public void useV2(final RequestContext requestContext, final String code) {
+        final String orderId = UUID.randomUUID().toString().toUpperCase().replaceAll("-", "");
+
         final VoucherEntity voucherEntity = voucherRepository.findByCode(code)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품권입니다."));
 
-        voucherEntity.use();
+        final VoucherHistoryEntity voucherHistoryEntity = new VoucherHistoryEntity(orderId, requestContext.requesterType(),
+                requestContext.requesterId(), VoucherStatusType.USE, "테스트 사용");
+
+        voucherEntity.use(voucherHistoryEntity);
 
         // voucherRepository.save(voucherEntity);
     }
