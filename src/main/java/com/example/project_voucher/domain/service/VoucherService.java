@@ -3,6 +3,8 @@ package com.example.project_voucher.domain.service;
 import com.example.project_voucher.common.dto.RequestContext;
 import com.example.project_voucher.common.type.VoucherAmountType;
 import com.example.project_voucher.common.type.VoucherStatusType;
+import com.example.project_voucher.domain.service.validator.VoucherDisableValidator;
+import com.example.project_voucher.domain.service.validator.VoucherPublishValidator;
 import com.example.project_voucher.storage.voucher.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,10 +16,14 @@ import java.util.UUID;
 public class VoucherService {
     private final VoucherRepository voucherRepository;
     private final ContractRepository contractRepository;
+    private final VoucherPublishValidator voucherPublishValidator;
+    private final VoucherDisableValidator voucherDisableValidator;
 
-    public VoucherService(VoucherRepository voucherRepository, ContractRepository contractRepository) {
+    public VoucherService(VoucherRepository voucherRepository, ContractRepository contractRepository, VoucherPublishValidator voucherPublishValidator, VoucherDisableValidator voucherDisableValidator) {
         this.voucherRepository = voucherRepository;
         this.contractRepository = contractRepository;
+        this.voucherPublishValidator = voucherPublishValidator;
+        this.voucherDisableValidator = voucherDisableValidator;
     }
 
     // 상품권 발행
@@ -105,6 +111,9 @@ public class VoucherService {
 
         final ContractEntity contractEntity = contractRepository.findByCode(contractCode)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계약입니다."));
+
+        voucherPublishValidator.validate(contractEntity);
+
         final VoucherHistoryEntity voucherHistoryEntity = new VoucherHistoryEntity(orderId, requestContext.requesterType(),
                 requestContext.requesterId(), VoucherStatusType.PUBLISH, "테스트 발행");
         final VoucherEntity voucherEntity = new VoucherEntity(code, VoucherStatusType.PUBLISH,
@@ -121,6 +130,8 @@ public class VoucherService {
 
         final VoucherEntity voucherEntity = voucherRepository.findByCode(code)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품권입니다."));
+
+        voucherDisableValidator.validate(voucherEntity, requestContext);
 
         final VoucherHistoryEntity voucherHistoryEntity = new VoucherHistoryEntity(orderId, requestContext.requesterType(),
                 requestContext.requesterId(), VoucherStatusType.DISABLE, "테스트 사용 불가");

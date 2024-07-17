@@ -4,6 +4,7 @@ import com.example.project_voucher.common.type.VoucherAmountType;
 import com.example.project_voucher.common.type.VoucherStatusType;
 import com.example.project_voucher.storage.BaseEntity;
 import jakarta.persistence.*;
+import org.springframework.cglib.core.Local;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -25,6 +26,10 @@ public class ContractEntity extends BaseEntity {
         this.validFrom = validFrom;
         this.validTo = validTo;
         this.voucherValidPeriodDayCount = voucherValidPeriodDayCount;
+    }
+
+    public Boolean isExpired() {
+        return LocalDate.now().isAfter(validTo);
     }
 
     public String code() {
